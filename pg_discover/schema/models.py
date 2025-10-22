@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class TableColumn(BaseModel):
-    name: str
+    column_name: str
     data_type: str
     char_max_len: int | None
     is_nullable: bool
@@ -12,18 +12,18 @@ class TableColumn(BaseModel):
 
 
 class Table(BaseModel):
-    name: str
+    table_name: str
     table_type: Literal["view", "table", "unknown"]
     columns: list[TableColumn]
 
 
 class Schema(BaseModel):
-    name: str
+    schema_name: str
     tables: list[Table]
 
 
 class Collection(BaseModel):
-    name: str
+    collection_name: str
     schemas: list[Schema]
 
 

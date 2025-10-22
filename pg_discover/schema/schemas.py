@@ -6,7 +6,7 @@ from psycopg.rows import class_row
 from psycopg.cursor import Cursor
 import polars as pl
 
-from discoverer.models import Collection, Schema, Table, TableColumn, _SchemasTables
+from schema.models import Collection, Schema, Table, TableColumn, _SchemasTables
 
 
 class Discoverer:
@@ -59,15 +59,15 @@ class Discoverer:
                         row["table_type"]
                     )
                     table = Table(
-                        name=row["table"],
+                        table_name=row["table"],
                         table_type=row["table_type"],
                         columns=table_desc,
                     )
                     tables.append(table)
 
-                schemas.append(Schema(name=sch, tables=tables))
+                schemas.append(Schema(schema_name=sch, tables=tables))
             
-            collections.append(Collection(name=cat, schemas=schemas))
+            collections.append(Collection(collection_name=cat, schemas=schemas))
 
         return collections
     
@@ -75,7 +75,7 @@ class Discoverer:
     def _table_col_row_factory(cursor: Cursor) -> Callable:
         def make_table(values):
             return TableColumn(
-                name=values[0],
+                column_name=values[0],
                 data_type=values[1],
                 char_max_len=values[2],
                 is_nullable=values[3] == "YES",
