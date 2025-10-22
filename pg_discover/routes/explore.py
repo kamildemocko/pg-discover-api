@@ -5,8 +5,12 @@ import psycopg
 from psycopg.rows import class_row
 from psycopg.cursor import Cursor
 import polars as pl
+from cachetools import TTLCache, cached
 
-from schema.models import Collection, Schema, Table, TableColumn, _SchemasTables
+from models.explore import Collection, Schema, Table, TableColumn, _SchemasTables
+
+
+cache = TTLCache(maxsize=100, ttl=360)
 
 
 class Discoverer:
@@ -24,6 +28,8 @@ class Discoverer:
 
         atexit.register(self.connection.close)
 
+
+    @cached(cache)
     def discover_tables(self) -> list[Collection]:
         query = """
         SELECT table_catalog as catalog, table_schema as schema, table_name as table, table_type
@@ -42,12 +48,12 @@ class Discoverer:
         )
 
         collections = []
-        all_catalogs = df["catalog"].unique().to_list()
+        all_catalogs = df["catalog"].unique().sort().to_list()
         for cat in all_catalogs:
             fil_cat = df.filter(pl.col("catalog") == cat)
 
             schemas = []
-            all_schemas = fil_cat["schema_"].unique().to_list()
+            all_schemas = fil_cat["schema_"].unique().sort().to_list()
             for sch in all_schemas:
                 fil_sch = fil_cat.filter(pl.col("schema_") == sch)
 
@@ -95,8 +101,7 @@ class Discoverer:
             is_nullable,
             column_default
         FROM information_schema.columns 
-        WHERE table_schema = %s AND table_name = %s
-        ORDER BY ordinal_position;
+        WHERE table_schema = %s AND table_name = %s;
         """
 
         with self.connection.cursor(row_factory=self._table_col_row_factory) as cur:
