@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -25,3 +27,10 @@ class Table(BaseModel):
     schema_name: str
     table_name: str
     columns: list[TableColumn]
+
+
+class TableSample(BaseModel):
+    database_name: str
+    schema_name: str
+    table_name: str
+    sample_data: list[dict[str, Any]]

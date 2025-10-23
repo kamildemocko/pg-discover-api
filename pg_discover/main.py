@@ -6,6 +6,7 @@ from models.explore import ExploreDatabase
 from models.shared import Schemas
 from models.shared import Tables
 from models.shared import Table
+from models.shared import TableSample
 from routes.explore import ExploreRoute
 from routes.schema import SchemaRoute
 from routes.table import TableRoute
@@ -73,9 +74,17 @@ def table_detail(database: str, schema: str, table: str, config: DatabaseConfig)
         )
 
 
-@app.get("/table/{schema}/{table}/sample")
-def table_example(schema: str, config: DatabaseConfig) -> list[Schemas]:
-    ...
+@app.get("/table/{database}/{schema}/{table}/sample")
+def table_example(database: str, schema: str, table: str, config: DatabaseConfig) -> TableSample:
+    try:
+        with TableRoute(**config.model_dump()) as tab:
+            return tab.get_sample(database, schema, table)
+
+    except (TimeoutError, ConnectionError) as err:
+        raise HTTPException(
+            status_code=400,
+            detail=err
+        )
 
 
 @app.get("/stats/{schema}")

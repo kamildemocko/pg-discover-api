@@ -1,10 +1,13 @@
 from typing import Self, Callable
 import psycopg
 from psycopg.cursor import Cursor
+from psycopg.sql import SQL
 from cachetools import TTLCache, cached
 
 from models.shared import Tables
-from models.shared import Table, TableColumn
+from models.shared import Table
+from models.shared import TableColumn
+from models.shared import TableSample
 
 
 cache = TTLCache(maxsize=100, ttl=360)
@@ -85,5 +88,34 @@ class TableRoute:
             schema_name=schema,
             table_name=table,
             columns=values
+        )
+
+    @cached(cache)
+    def get_sample(self, database: str, schema: str, table: str) -> TableSample:
+        query = f"""
+        SELECT *
+        FROM {schema}.{table}
+        ORDER BY RANDOM()
+        LIMIT 10;
+        """
+        assert self.connection is not None, "connection not set up"
+        with self.connection.cursor() as cur:
+            cur.execute(query)  #type: ignore
+            header = [desc[0] for desc in cur.description] if cur.description else []
+            rows = cur.fetchall()
+
+            data = []
+            for row in rows:
+                dct = {}
+                for h, v in zip(header, row):
+                    v = v if v is not None and not isinstance(v, (str, int, float, bool)) else str(v)
+                    dct[h] = v
+                data.append(dct)
+            
+        return TableSample(
+            database_name=database,
+            schema_name=schema,
+            table_name=table,
+            sample_data=data,
         )
 
