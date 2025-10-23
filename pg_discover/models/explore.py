@@ -22,8 +22,8 @@ class Schema(BaseModel):
     tables: list[Table]
 
 
-class Collection(BaseModel):
-    collection_name: str
+class ExploreDatabase(BaseModel):
+    database_name: str
     schemas: list[Schema]
 
 

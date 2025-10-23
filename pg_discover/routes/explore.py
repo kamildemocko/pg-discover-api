@@ -6,7 +6,7 @@ from psycopg.cursor import Cursor
 import polars as pl
 from cachetools import TTLCache, cached
 
-from models.explore import Collection, Schema, Table, TableColumn, _SchemasTables
+from models.explore import ExploreDatabase, Schema, Table, TableColumn, _SchemasTables
 
 
 cache = TTLCache(maxsize=100, ttl=360)
@@ -35,7 +35,7 @@ class Explore:
 
 
     @cached(cache)
-    def explore_tables(self) -> list[Collection]:
+    def explore_tables(self) -> list[ExploreDatabase]:
         query = """
         SELECT table_catalog as catalog, table_schema as schema, table_name as table, table_type
         FROM information_schema.tables
@@ -79,7 +79,7 @@ class Explore:
 
                 schemas.append(Schema(schema_name=sch, tables=tables))
             
-            collections.append(Collection(collection_name=cat, schemas=schemas))
+            collections.append(ExploreDatabase(database_name=cat, schemas=schemas))
 
         return collections
     
