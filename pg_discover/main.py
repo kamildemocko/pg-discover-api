@@ -7,6 +7,7 @@ from models.shared import Schemas
 from models.shared import Tables
 from models.shared import Table
 from models.shared import TableSample
+from models.shared import TableConstraints
 from routes.explore import ExploreRoute
 from routes.schema import SchemaRoute
 from routes.table import TableRoute
@@ -109,9 +110,21 @@ def table_example(database: str, schema: str, table: str, config: DatabaseConfig
         )
 
 
-@app.get("/stats/{schema}")
-def stats(schema: str, config: DatabaseConfig) -> list[Schemas]:
-    ...
+@app.get("/table/{database}/{schema}/{table}/constraints")
+def table_constraints(database: str, schema: str, table: str, config: DatabaseConfig) -> TableConstraints:
+    try:
+        with TableRoute(**config.model_dump()) as tab:
+            return tab.get_constraints(database, schema, table)
+
+    except (TimeoutError, ConnectionError) as err:
+        raise HTTPException(
+            status_code=400,
+            detail=str(err)
+        )
+    except PermissionError:
+        raise HTTPException(
+            status_code=401,
+        )
 
 
 if __name__ == "__main__":

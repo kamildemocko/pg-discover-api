@@ -34,3 +34,17 @@ class TableSample(BaseModel):
     schema_name: str
     table_name: str
     sample_data: list[dict[str, Any]]
+
+
+class TableConstraint(BaseModel):
+    constraint_name: str
+    constraint_type: str
+    column_name: str
+
+
+class TableConstraints(BaseModel):
+    database_name: str
+    schema_name: str
+    table_name: str
+    constraints: list[TableConstraint]
+

@@ -8,6 +8,8 @@ from models.shared import Tables
 from models.shared import Table
 from models.shared import TableColumn
 from models.shared import TableSample
+from models.shared import TableConstraints
+from models.shared import TableConstraint
 
 
 cache = TTLCache(maxsize=100, ttl=360)
@@ -122,3 +124,41 @@ class TableRoute:
             sample_data=data,
         )
 
+    @staticmethod
+    def _table_constrains_row_factory(cursor: Cursor) -> Callable:
+        def make_table(values):
+            return TableConstraint(
+                constraint_name=values[0],
+                constraint_type=values[1],
+                column_name=values[2],
+            )
+        
+        return make_table
+
+    @cached(cache)
+    def get_constraints(self, database: str, schema: str, table: str) -> TableConstraints:
+        query = """
+        SELECT 
+            tc.constraint_name,
+            constraint_type,
+            column_name
+        FROM 
+            information_schema.table_constraints AS tc
+        JOIN 
+            information_schema.key_column_usage AS kcu
+            ON kcu.constraint_name = tc.constraint_name
+        WHERE 
+            tc.constraint_schema = %s
+            and tc.table_name = %s;
+        """
+        assert self.connection is not None, "connection not set up"
+        with self.connection.cursor(row_factory=self._table_constrains_row_factory) as cur:
+            cur.execute(query, (schema, table))
+            values = cur.fetchall()
+        
+        return TableConstraints(
+            database_name=database,
+            schema_name=schema,
+            table_name=table,
+            constraints=values,
+        )
