@@ -12,7 +12,7 @@ from models.explore import ExploreDatabase, Schema, Table, TableColumn, _Schemas
 cache = TTLCache(maxsize=100, ttl=360)
 
 
-class Explore:
+class ExploreRoute:
     def __init__(self, host: str, port: int, database: str, user: str, password: str, connect_timeout: int = 10) -> None:
         self.dsn = f"host={host} port={port} dbname={database} user={user} password={password} connect_timeout={connect_timeout}"
         self.connection: psycopg.Connection | None = None
@@ -118,6 +118,6 @@ class Explore:
 
 
 if __name__ == "__main__":
-    di = Explore(host="192.168.0.12", port=5432, database="postgres", user="postgres", password="")
+    di = ExploreRoute(host="192.168.0.12", port=5432, database="postgres", user="postgres", password="")
     collections = di.explore_tables()
     print(collections)

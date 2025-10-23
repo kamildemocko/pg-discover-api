@@ -2,13 +2,13 @@ from typing import Self
 import psycopg
 from cachetools import TTLCache, cached
 
-from models.shared import Schemas
+from models.shared import Tables
 
 
 cache = TTLCache(maxsize=100, ttl=360)
 
 
-class SchemaRoute:
+class TableRoute:
     def __init__(self, host: str, port: int, database: str, user: str, password: str, connect_timeout: int = 10) -> None:
         self.dsn = f"host={host} port={port} dbname={database} user={user} password={password} connect_timeout={connect_timeout}"
         self.connection: psycopg.Connection | None = None
@@ -30,19 +30,20 @@ class SchemaRoute:
             self.connection.close()
 
     @cached(cache)
-    def get_schemas(self, database: str) -> Schemas:
+    def get_tables(self, database: str, schema: str) -> Tables:
         query = """
-        SELECT table_schema
+        SELECT table_name
         FROM information_schema.tables
         WHERE table_schema not in ('pg_catalog', 'information_schema')
-        and table_catalog = %s;
+        and table_catalog = %s and table_schema = %s;
         """
         assert self.connection is not None, "connection not set up"
         with self.connection.cursor() as cur:
-            cur.execute(query, (database, ))
+            cur.execute(query, (database, schema))
             values = cur.fetchall()
         
-        return Schemas(
+        return Tables(
             database_name=database,
-            schemas=[a[0] for a in values],
+            schema_name=schema,
+            tables=[a[0] for a in values],
         )
