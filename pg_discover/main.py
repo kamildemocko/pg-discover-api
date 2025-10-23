@@ -12,6 +12,7 @@ from routes.schema import SchemaRoute
 from routes.table import TableRoute
 from exception_handlers import custom_handler
 from exception_handlers import not_found_handler
+from exception_handlers import permission_denied_handler
 from exception_handlers import not_authenticated_handler
 
 
@@ -19,7 +20,8 @@ app = FastAPI()
 
 app.add_exception_handler(HTTPException, custom_handler)
 app.add_exception_handler(404, not_found_handler)
-app.add_exception_handler(403, not_authenticated_handler)
+app.add_exception_handler(403, permission_denied_handler)
+app.add_exception_handler(401, not_authenticated_handler)
 
 
 @app.get("/explore")
@@ -31,7 +33,11 @@ def explore(config: DatabaseConfig) -> list[ExploreDatabase]:
     except (TimeoutError, ConnectionError) as err:
         raise HTTPException(
             status_code=400,
-            detail=err
+            detail=str(err)
+        )
+    except PermissionError:
+        raise HTTPException(
+            status_code=401,
         )
 
 
@@ -44,7 +50,11 @@ def schema_list(database: str, config: DatabaseConfig) -> Schemas:
     except (TimeoutError, ConnectionError) as err:
         raise HTTPException(
             status_code=400,
-            detail=err
+            detail=str(err)
+        )
+    except PermissionError:
+        raise HTTPException(
+            status_code=401,
         )
 
 
@@ -57,7 +67,11 @@ def table_list(database: str, schema: str, config: DatabaseConfig) -> Tables:
     except (TimeoutError, ConnectionError) as err:
         raise HTTPException(
             status_code=400,
-            detail=err
+            detail=str(err)
+        )
+    except PermissionError:
+        raise HTTPException(
+            status_code=401,
         )
 
 
@@ -70,7 +84,11 @@ def table_detail(database: str, schema: str, table: str, config: DatabaseConfig)
     except (TimeoutError, ConnectionError) as err:
         raise HTTPException(
             status_code=400,
-            detail=err
+            detail=str(err)
+        )
+    except PermissionError:
+        raise HTTPException(
+            status_code=401,
         )
 
 
@@ -83,7 +101,11 @@ def table_example(database: str, schema: str, table: str, config: DatabaseConfig
     except (TimeoutError, ConnectionError) as err:
         raise HTTPException(
             status_code=400,
-            detail=err
+            detail=str(err)
+        )
+    except PermissionError:
+        raise HTTPException(
+            status_code=401,
         )
 
 

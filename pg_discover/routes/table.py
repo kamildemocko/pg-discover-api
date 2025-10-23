@@ -26,7 +26,10 @@ class TableRoute:
             raise TimeoutError("error connection timeout") from ter
 
         except psycopg.OperationalError as oer:
-            raise ConnectionError("error connecting") from oer
+            if "authentication failed" in str(oer):
+                raise PermissionError("not authenticated") from oer
+            else:
+                raise ConnectionError("error connecting") from oer
         
         return self
     

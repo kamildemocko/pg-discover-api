@@ -27,11 +27,22 @@ async def not_found_handler(request: Request, exc: Exception):
     )
 
 
-async def not_authenticated_handler(request: Request, exc: Exception):
+async def permission_denied_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=403,
         content={
             "code": 403,
+            "status": "error",
+            "message": {"desc": "Permission denied"}
+        }
+    )
+
+
+async def not_authenticated_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=401,
+        content={
+            "code": 401,
             "status": "error",
             "message": {"desc": "Not authenticated"}
         }
