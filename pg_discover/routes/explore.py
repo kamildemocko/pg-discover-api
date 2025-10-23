@@ -68,7 +68,6 @@ class ExploreRoute:
                     table_desc = self.explore_table_columns(
                         sch, 
                         row["table"],
-                        row["table_type"]
                     )
                     table = Table(
                         table_name=row["table"],
@@ -96,9 +95,7 @@ class ExploreRoute:
         
         return make_table
 
-    def explore_table_columns(
-            self, schema: str, table: str, table_type: Literal["view", "table"]
-    ) -> list[TableColumn]:
+    def explore_table_columns(self, schema: str, table: str) -> list[TableColumn]:
         query = """
         SELECT 
             column_name,

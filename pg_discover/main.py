@@ -5,6 +5,7 @@ from models.main import DatabaseConfig
 from models.explore import ExploreDatabase
 from models.shared import Schemas
 from models.shared import Tables
+from models.shared import Table
 from routes.explore import ExploreRoute
 from routes.schema import SchemaRoute
 from routes.table import TableRoute
@@ -59,9 +60,17 @@ def table_list(database: str, schema: str, config: DatabaseConfig) -> Tables:
         )
 
 
-@app.get("/table/{schema}/{table}")
-def table_detail(schema: str, config: DatabaseConfig) -> list[Schemas]:
-    ...
+@app.get("/table/{database}/{schema}/{table}")
+def table_detail(database: str, schema: str, table: str, config: DatabaseConfig) -> Table:
+    try:
+        with TableRoute(**config.model_dump()) as tab:
+            return tab.get_columns(database, schema, table)
+
+    except (TimeoutError, ConnectionError) as err:
+        raise HTTPException(
+            status_code=400,
+            detail=err
+        )
 
 
 @app.get("/table/{schema}/{table}/sample")

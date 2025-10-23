@@ -1,8 +1,10 @@
-from typing import Self
+from typing import Self, Callable
 import psycopg
+from psycopg.cursor import Cursor
 from cachetools import TTLCache, cached
 
 from models.shared import Tables
+from models.shared import Table, TableColumn
 
 
 cache = TTLCache(maxsize=100, ttl=360)
@@ -47,3 +49,41 @@ class TableRoute:
             schema_name=schema,
             tables=[a[0] for a in values],
         )
+
+    @staticmethod
+    def _table_col_row_factory(cursor: Cursor) -> Callable:
+        def make_table(values):
+            return TableColumn(
+                column_name=values[0],
+                data_type=values[1],
+                char_max_len=values[2],
+                is_nullable=values[3] == "YES",
+                default=values[4] or "",
+            )
+        
+        return make_table
+
+    @cached(cache)
+    def get_columns(self, database: str, schema: str, table: str) -> Table:
+        query = """
+        SELECT 
+            column_name,
+            data_type,
+            character_maximum_length,
+            is_nullable,
+            column_default
+        FROM information_schema.columns 
+        WHERE table_catalog = %s AND table_schema = %s AND table_name = %s;
+        """
+        assert self.connection is not None, "connection not set up"
+        with self.connection.cursor(row_factory=self._table_col_row_factory) as cur:
+            cur.execute(query, (database, schema, table))
+            values = cur.fetchall()
+        
+        return Table(
+            database_name=database,
+            schema_name=schema,
+            table_name=table,
+            columns=values
+        )
+

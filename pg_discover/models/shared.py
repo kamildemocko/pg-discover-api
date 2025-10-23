@@ -10,3 +10,18 @@ class Tables(BaseModel):
     database_name: str
     schema_name: str
     tables: list[str]
+
+
+class TableColumn(BaseModel):
+    column_name: str
+    data_type: str
+    char_max_len: int | None
+    is_nullable: bool
+    default: str
+
+
+class Table(BaseModel):
+    database_name: str
+    schema_name: str
+    table_name: str
+    columns: list[TableColumn]
