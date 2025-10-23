@@ -1,5 +1,4 @@
-from typing import Literal, Callable
-import atexit
+from typing import Literal, Callable, Self
 
 import psycopg
 from psycopg.rows import class_row
@@ -13,29 +12,36 @@ from models.explore import Collection, Schema, Table, TableColumn, _SchemasTable
 cache = TTLCache(maxsize=100, ttl=360)
 
 
-class Discoverer:
+class Explore:
     def __init__(self, host: str, port: int, database: str, user: str, password: str, connect_timeout: int = 10) -> None:
-        dsn = f"host={host} port={port} dbname={database} user={user} password={password} connect_timeout={connect_timeout}"
-
+        self.dsn = f"host={host} port={port} dbname={database} user={user} password={password} connect_timeout={connect_timeout}"
+        self.connection: psycopg.Connection | None = None
+    
+    def __enter__(self) -> Self:
         try:
-            self.connection = psycopg.connect(dsn)
+            self.connection = psycopg.connect(self.dsn)
 
         except psycopg.errors.ConnectionTimeout as ter:
-            raise TimeoutError(f"error connection timeout to {host=} {port=}") from ter
+            raise TimeoutError("error connection timeout") from ter
 
         except psycopg.OperationalError as oer:
-            raise ConnectionError(f"error connecting to {host=} {port=}") from oer
-
-        atexit.register(self.connection.close)
+            raise ConnectionError("error connecting") from oer
+        
+        return self
+    
+    def __exit__(self, *args) -> None:
+        if self.connection:
+            self.connection.close()
 
 
     @cached(cache)
-    def discover_tables(self) -> list[Collection]:
+    def explore_tables(self) -> list[Collection]:
         query = """
         SELECT table_catalog as catalog, table_schema as schema, table_name as table, table_type
         FROM information_schema.tables
         WHERE table_schema not in ('pg_catalog', 'information_schema');
         """
+        assert self.connection is not None, "connection not set up"
         with self.connection.cursor(row_factory=class_row(_SchemasTables)) as cur:
             cur.execute(query)
             schemas_tables = cur.fetchall()
@@ -59,7 +65,7 @@ class Discoverer:
 
                 tables = []
                 for row in fil_sch.iter_rows(named=True):
-                    table_desc = self.discover_table_columns(
+                    table_desc = self.explore_table_columns(
                         sch, 
                         row["table"],
                         row["table_type"]
@@ -90,7 +96,7 @@ class Discoverer:
         
         return make_table
 
-    def discover_table_columns(
+    def explore_table_columns(
             self, schema: str, table: str, table_type: Literal["view", "table"]
     ) -> list[TableColumn]:
         query = """
@@ -103,7 +109,7 @@ class Discoverer:
         FROM information_schema.columns 
         WHERE table_schema = %s AND table_name = %s;
         """
-
+        assert self.connection is not None, "connection not set up"
         with self.connection.cursor(row_factory=self._table_col_row_factory) as cur:
             cur.execute(query, (schema, table))
             table_columns: list[TableColumn] = cur.fetchall()
@@ -112,6 +118,6 @@ class Discoverer:
 
 
 if __name__ == "__main__":
-    di = Discoverer(host="192.168.0.12", port=5432, database="postgres", user="postgres", password="")
-    collections = di.discover_tables()
+    di = Explore(host="192.168.0.12", port=5432, database="postgres", user="postgres", password="")
+    collections = di.explore_tables()
     print(collections)
