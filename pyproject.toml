@@ -1,7 +1,7 @@
 [project]
-name = "pg-discover"
+name = "pg-schema-explorer"
 version = "0.1.0"
-description = "Add your description here"
+description = "A FastAPI application to explore PostgreSQL database schemas."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -11,12 +11,4 @@ dependencies = [
     "psycopg[binary]>=3.2.11",
     "pydantic>=2.12.3",
     "uvicorn>=0.38.0",
-]
-
-[dependency-groups]
-dev = [
-    "basedpyright>=1.31.7",
-    "black>=25.9.0",
-    "debugpy>=1.8.17",
-    "ruff>=0.14.1",
 ]
