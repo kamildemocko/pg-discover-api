@@ -12,8 +12,8 @@ A PostgreSQL database discovery tool that provides a REST API to explore databas
 ## Installation
 
 ```bash
-git clone https://github.com/kamildemocko/pg-discover-api.git
-cd pg-discover-api
+git clone https://github.com/kamildemocko/pg-schema-explorer.git
+cd pg-schema-explorer
 uv sync
 ```
 
@@ -24,7 +24,7 @@ uv sync
 Start the server:
 
 ```bash
-uv run pg-discover
+uv run pg_schema_explorer\main.py
 ```
 
 The API will be available at `http://localhost:8080`
