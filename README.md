@@ -1,4 +1,4 @@
-# pg-discover
+# Postgres Schema Explorer
 
 A PostgreSQL database discovery tool that provides a REST API to explore database schemas, tables, and columns.
 
